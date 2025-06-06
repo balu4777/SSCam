@@ -20,6 +20,9 @@ import App from "App";
 
 // Material Dashboard 2 React Context Provider
 import { MaterialUIControllerProvider } from "context";
+import { GoogleOAuthProvider } from "@react-oauth/google"; 
+import { ToastContainer } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 
 const container = document.getElementById("app");
 const root = createRoot(container);
@@ -27,7 +30,10 @@ const root = createRoot(container);
 root.render(
   <BrowserRouter>
     <MaterialUIControllerProvider>
-      <App />
+      <GoogleOAuthProvider clientId={process.env.REACT_APP_GOOGLE_CLIENT_ID}>
+        <App />
+        <ToastContainer position="top-right" autoClose={3000} />
+      </GoogleOAuthProvider>
     </MaterialUIControllerProvider>
   </BrowserRouter>
 );
