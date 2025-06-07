@@ -11,3 +11,5 @@ export const EMAIL_ERROR =
   
   export const LOGIN_URL = 'account/login';
   export const GOOGLE_SIGNIN_URL = 'account/google-signin';
+  export const REGISTER_URL = 'account/signup';
+  export const GOOGLE_SIGNUP_URL = 'account/google-signup';

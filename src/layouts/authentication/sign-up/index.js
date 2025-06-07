@@ -39,7 +39,7 @@ import bgImage from "assets/images/bg-sign-up-cover.jpeg";
 import { useState, useRef, useEffect } from "react";
 
 import { useGoogleLogin } from '@react-oauth/google';
-import { jwtDecode } from 'jwt-decode';
+import { REGISTER_URL, GOOGLE_SIGNUP_URL } from 'config/CONSTANTS';
 import axios from 'axios';
 import { toast } from 'react-toastify';
 
@@ -48,8 +48,7 @@ import { toast } from 'react-toastify';
 const USER_REGEX = /^[A-z][A-z0-9-_]{3,23}$/;
 const EMAIL_REGEX = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
 const PWD_REGEX = /^(?=.*[a-z])(?=.*[A-Z])(?=.*[0-9])(?=.*[!@#$%]).{8,24}$/;
-const REGISTER_URL = 'Account/signup';
-const GOOGLE_SIGNUP_URL = 'Account/google-signup';
+
 
 function Cover() {
   const userRef = useRef();

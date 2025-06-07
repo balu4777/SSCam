@@ -8,7 +8,7 @@ import axios from "axios"
 // account service starts
 
 export const accountLoginServices = async (apiData) => {
-  return axiosClient.post(process.env.REACT_APP_BASE_API_URL + 'Account/login', {
+  return axiosClient.post(process.env.REACT_APP_BASE_API_URL + 'account/login', {
     email: 'admin@sscam.com',
     password: 'admin@123'
   })
@@ -21,6 +21,6 @@ export const accountLoginServices = async (apiData) => {
 }
 
 export const getProfile = async () => {
-  const response = await axios.get(process.env.REACT_APP_BASE_API_URL  + "User/myprofile"); // Replace with your actual endpoint
+  const response = await axios.get(process.env.REACT_APP_BASE_API_URL  + "user/myprofile"); // Replace with your actual endpoint
   return response.data;
 };
