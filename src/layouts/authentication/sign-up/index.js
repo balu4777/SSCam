@@ -49,6 +49,7 @@ const USER_REGEX = /^[A-z][A-z0-9-_]{3,23}$/;
 const EMAIL_REGEX = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
 const PWD_REGEX = /^(?=.*[a-z])(?=.*[A-Z])(?=.*[0-9])(?=.*[!@#$%]).{8,24}$/;
 const REGISTER_URL = 'Account/signup';
+const GOOGLE_SIGNUP_URL = 'Account/google-signup';
 
 function Cover() {
   const userRef = useRef();
@@ -167,13 +168,18 @@ function Cover() {
   const googleLogin = useGoogleLogin({
     onSuccess: async (tokenResponse) => {
       const token = tokenResponse.credential || tokenResponse.access_token;
-      const decoded = jwtDecode(token);
-      console.log("Google user info:", decoded);
+      console.log("Google user info:", tokenResponse);
 
       try {
-        const response = await axios.post('/api/google-login', { token });
-        alert(`Google login success: ${JSON.stringify(response.data)}`);
-        // Save JWT if needed
+        const response = await axios.post(
+          process.env.REACT_APP_BASE_API_URL + GOOGLE_SIGNUP_URL,
+          JSON.stringify({ idToken: tokenResponse.access_token }),
+          {
+            headers: { 'Content-Type': 'application/json' },
+            withCredentials: true,
+          }
+        );
+        
       } catch (error) {
         console.error("Backend login error:", error);
       }
@@ -225,7 +231,7 @@ function Cover() {
       setlastNameError(false);
       setEmailError('');
       setPasswordError(false);
-      
+
       // ✅ Redirect after short delay (to allow user to read toast)
       setTimeout(() => {
         window.location.href = "/authentication/sign-in";

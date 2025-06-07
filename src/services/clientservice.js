@@ -26,3 +26,12 @@ axiosClient.interceptors.request.use((config) => {
   
 })
 export default axiosClient
+
+export const axiosPrivate = axios.create({
+  baseURL: process.env.REACT_APP_BASE_API_URL,
+  headers: {
+    "Content-Type": "application/json",
+    Accept: "application/json",
+  },
+  withCredentials: true, // Include credentials for cross-origin requests
+});

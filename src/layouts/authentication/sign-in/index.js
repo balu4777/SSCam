@@ -45,10 +45,13 @@ import { useGoogleLogin } from '@react-oauth/google';
 import { jwtDecode } from 'jwt-decode';
 import axios from 'axios';
 import { bool } from 'prop-types';
+import { useNavigate, useLocation } from 'react-router-dom';
+import Cookies from 'js-cookie';
+import { LOGIN_URL, GOOGLE_SIGNIN_URL } from 'config/CONSTANTS';
 
-const LOGIN_URL = 'Account/login';
 
 function Basic() {
+  const navigate = useNavigate();
   const [rememberMe, setRememberMe] = useState(false);
 
   const userRef = useRef();
@@ -93,7 +96,7 @@ function Basic() {
       setEmailError("Email is required");
     }
   };
-  
+
   const handlePassBlur = () => {
     if (password.trim() === "") {
       setPassError("Password is required");
@@ -117,13 +120,16 @@ function Basic() {
   const googleLogin = useGoogleLogin({
     onSuccess: async (tokenResponse) => {
       const token = tokenResponse.credential || tokenResponse.access_token;
-      const decoded = jwtDecode(token);
-      console.log("Google user info:", decoded);
-
       try {
-        const response = await axios.post('/api/google-login', { token });
-        alert(`Google login success: ${JSON.stringify(response.data)}`);
-        // Save JWT if needed
+        const response = await axios.post(
+          process.env.REACT_APP_BASE_API_URL + GOOGLE_SIGNIN_URL,
+          JSON.stringify({ idToken: tokenResponse.access_token }),
+          {
+            headers: { 'Content-Type': 'application/json' },
+            withCredentials: true,
+          }
+        );
+
       } catch (error) {
         console.error("Backend login error:", error);
       }
@@ -150,15 +156,24 @@ function Basic() {
           withCredentials: true
         }
       );
-      console.log(JSON.stringify(response?.data));
-      //console.log(JSON.stringify(response));
-      const accessToken = response?.data?.accessToken;
-      const roles = response?.data?.roles;
-      //setAuth({ email, password, roles, accessToken });
+      const { accessToken  } = response.data.data.accessToken;
+
+      // Store token in a secure cookie
+      Cookies.set('accessToken', accessToken, {
+        expires: 1,            // 1 day
+        secure: true,          // HTTPS only
+        sameSite: 'Lax',       // or 'Strict'
+        path: '/',
+      });
+
+      // Clear inputs
       setEmail('');
       setPassword('');
-      navigate(from, { replace: true });
+
+      // Redirect to dashboard
+      navigate('/dashboard', { replace: true });
     } catch (err) {
+      console.error(err);
       if (!err?.response) {
         setErrMsg('No Server Response');
       } else if (err.response?.status === 400) {
