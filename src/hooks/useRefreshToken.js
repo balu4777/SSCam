@@ -19,4 +19,5 @@ const useRefreshToken = () => {
             throw error; // Re-throw the error for further handling if needed
         }
     };
+    return refresh;
 };

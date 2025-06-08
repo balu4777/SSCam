@@ -23,20 +23,20 @@ import { MaterialUIControllerProvider } from "context/index";
 import { GoogleOAuthProvider } from "@react-oauth/google";
 import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
-import AuthContext from "context/AuthProvider";
+import { AuthProvider } from "context/AuthProvider";
 
 const container = document.getElementById("app");
 const root = createRoot(container);
 
 root.render(
   <BrowserRouter>
-    <MaterialUIControllerProvider>
-      {/* <AuthContext> */}
+    <AuthProvider>
+      <MaterialUIControllerProvider>
         <GoogleOAuthProvider clientId={process.env.REACT_APP_GOOGLE_CLIENT_ID}>
           <App />
           <ToastContainer position="top-right" autoClose={3000} />
         </GoogleOAuthProvider>
-      {/* </AuthContext> */}
-    </MaterialUIControllerProvider>
+      </MaterialUIControllerProvider>
+    </AuthProvider>
   </BrowserRouter >
 );

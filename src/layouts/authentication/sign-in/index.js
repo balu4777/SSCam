@@ -13,7 +13,7 @@ Coded by www.creative-tim.com
 * The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
 */
 
-import { useRef, useState, useEffect, use } from 'react';
+import { useRef, useState, useEffect, use, useContext } from 'react';
 
 // react-router-dom components
 import { Link } from "react-router-dom";
@@ -48,9 +48,14 @@ import { bool } from 'prop-types';
 import { useNavigate, useLocation } from 'react-router-dom';
 import Cookies from 'js-cookie';
 import { LOGIN_URL, GOOGLE_SIGNIN_URL } from 'config/CONSTANTS';
+import useAuth from '../../../hooks/useAuth';
+import { AuthContext } from 'context/AuthProvider';
+
 
 
 function Basic() {
+  const { setAccessToken } = useContext(AuthContext);
+  //console.log("A!Access Token:", accessToken);
   const navigate = useNavigate();
   const [rememberMe, setRememberMe] = useState(false);
 
@@ -128,7 +133,13 @@ function Basic() {
             headers: { 'Content-Type': 'application/json' },
             withCredentials: true,
           }
+
         );
+        //const { accessToken } = response.data.data.accessToken;
+        setAccessToken(response.data.accessToken);
+
+        // Redirect to dashboard
+        navigate('/dashboard', { replace: true });
 
       } catch (error) {
         console.error("Backend login error:", error);
@@ -156,15 +167,7 @@ function Basic() {
           withCredentials: true
         }
       );
-      const { accessToken  } = response.data.data.accessToken;
-
-      // Store token in a secure cookie
-      Cookies.set('accessToken', accessToken, {
-        expires: 1,            // 1 day
-        secure: true,          // HTTPS only
-        sameSite: 'Lax',       // or 'Strict'
-        path: '/',
-      });
+      setAccessToken(response.data.data.accessToken);
 
       // Clear inputs
       setEmail('');

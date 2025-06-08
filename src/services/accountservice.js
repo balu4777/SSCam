@@ -2,8 +2,7 @@ import { BASE_URL } from "config/CONSTANTS"
 import { object } from "prop-types"
 import axiosClient from "./clientservice"
 import axios from "axios"
-
-
+import useAuth from '../hooks/useAuth';
 
 // account service starts
 
@@ -20,7 +19,14 @@ export const accountLoginServices = async (apiData) => {
     });
 }
 
-export const getProfile = async () => {
-  const response = await axios.get(process.env.REACT_APP_BASE_API_URL  + "user/myprofile"); // Replace with your actual endpoint
+export const getProfile = async (accessToken) => {
+  const response = await axiosClient.get( "user/myprofile",{
+    headers: {
+      'Authorization': `Bearer ${accessToken}`,
+      'Content-Type': 'application/json'
+    },
+    withCredentials: true
+  }
+  ); // Replace with your actual endpoint
   return response.data;
 };

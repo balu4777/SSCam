@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect,useContext } from "react";
 import PropTypes from "prop-types";
 
 // @mui material components
@@ -16,11 +16,16 @@ import backgroundImage from "assets/images/bg-profile.jpeg";
 
 // 👇 Import your profile API
 import { getProfile } from "services/accountservice";
+import { AccessTime } from "@mui/icons-material";
+
+import {AuthContext}  from "context/AuthProvider";
 
 function Header({ children }) {
+  //const accestoken = localStorage.getItem("accessToken");
   const [tabsOrientation, setTabsOrientation] = useState("horizontal");
   const [profile, setProfile] = useState(null);
-
+  const { accessToken } = useContext(AuthContext);
+  console.log("Access Token:", accessToken);
   useEffect(() => {
     function handleTabsOrientation() {
       return window.innerWidth < breakpoints.values.sm
@@ -38,7 +43,7 @@ function Header({ children }) {
   useEffect(() => {
     const fetchProfile = async () => {
       try {
-        const data = await getProfile();
+        const data = await getProfile(accessToken);
         setProfile(data);
       } catch (error) {
         console.error("Error fetching profile:", error);
