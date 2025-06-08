@@ -13,10 +13,10 @@ Coded by www.creative-tim.com
 * The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
 */
 
-import { useRef, useState, useEffect, use } from 'react';
+import { useRef, useState, useEffect } from "react";
 
 // react-router-dom components
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 
 // @mui material components
 import Card from "@mui/material/Card";
@@ -41,151 +41,67 @@ import BasicLayout from "layouts/authentication/components/BasicLayout";
 // Images
 import bgImage from "assets/images/bg-sign-in-basic.jpeg";
 
-import { useGoogleLogin } from '@react-oauth/google';
-import { jwtDecode } from 'jwt-decode';
-import axios from 'axios';
-import { bool } from 'prop-types';
-import { useNavigate, useLocation } from 'react-router-dom';
-import Cookies from 'js-cookie';
-import { LOGIN_URL, GOOGLE_SIGNIN_URL } from 'config/CONSTANTS';
-
+import { useGoogleLogin } from "@react-oauth/google";
+import { loginService } from "services/accountServices";
+import { googleSignInService } from "services/googleServices";
 
 function Basic() {
   const navigate = useNavigate();
   const [rememberMe, setRememberMe] = useState(false);
+  const emailRef = useRef();
 
-  const userRef = useRef();
-  const errRef = useRef();
-
-  const [errMsg, setErrMsg] = useState('');
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [emailError, setEmailError] = useState("");
-  const [passerror, setPassError] = useState("");
-
-
-  useEffect(() => {
-    userRef.current.focus();
-  }, [])
+  const [userDetails, setUserDetails] = useState({
+    email: "",
+    password: "",
+  });
+  const [error, setError] = useState({
+    emailError: "",
+    passwordError: "",
+  });
 
   useEffect(() => {
-    setErrMsg('');
-  }, [email, password])
+    emailRef?.current?.focus();
+  }, []);
 
   const handleChange = (e) => {
-    const value = e.target.value;
-    setEmail(value);
-
-    // Clear error when field has a value
-    if (value.trim() !== "") {
-      setEmailError("");
-    }
+    const { name, value } = e.target;
+    setUserDetails((p) => ({ ...p, [name]: value?.trim() }));
+    setError((p) => ({ ...p, [name + "Error"]: "" }));
   };
 
-  const handlePassChange = (e) => {
-    const value = e.target.value;
-    setPassword(value);
-    // Clear error when field has a value
-    if (value.trim() !== "") {
-      setPassError("");
-    }
-  };
-
-  const handleBlur = () => {
-    if (email.trim() === "") {
-      setEmailError("Email is required");
-    }
-  };
-
-  const handlePassBlur = () => {
-    if (password.trim() === "") {
-      setPassError("Password is required");
-    }
+  const handleBlur = (e) => {
+    const { name, value } = e.target;
+    setError((p) => ({ ...p, [name + "Error"]: value?.trim() ? "" : `Enter ${name}` }));
   };
 
   const handleSetRememberMe = () => setRememberMe(!rememberMe);
 
-  // 🔐 Dummy Email/Password login
-  const handleFormLogin = async () => {
-    try {
-      const response = await axios.post('/api/login', { email, password });
-      alert(`Logged in successfully: ${JSON.stringify(response.data)}`);
-      // Save token or session as needed
-    } catch (error) {
-      alert("Login failed");
-    }
-  };
-
   // 🔐 Handle Google Login Success
   const googleLogin = useGoogleLogin({
     onSuccess: async (tokenResponse) => {
-      const token = tokenResponse.credential || tokenResponse.access_token;
-      try {
-        const response = await axios.post(
-          process.env.REACT_APP_BASE_API_URL + GOOGLE_SIGNIN_URL,
-          JSON.stringify({ idToken: tokenResponse.access_token }),
-          {
-            headers: { 'Content-Type': 'application/json' },
-            withCredentials: true,
-          }
-        );
-
-      } catch (error) {
-        console.error("Backend login error:", error);
-      }
+      const payload = { idToken: tokenResponse.credential || tokenResponse.access_token };
+      await googleSignInService(payload);
     },
     onError: () => {
       alert("Google Sign-In failed");
     },
-    flow: 'implicit', // or 'auth-code' if backend handles code exchange
+    flow: "implicit", // or 'auth-code' if backend handles code exchange
   });
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-
-    try {
-      if (email == "" || password == "") {
-        setErrMsg('please enter email and password');
-        errRef.current.focus();
-        return;
-      }
-      const response = await axios.post(process.env.REACT_APP_BASE_API_URL + LOGIN_URL,
-        JSON.stringify({ email, password }),
-        {
-          headers: { 'Content-Type': 'application/json' },
-          withCredentials: true
-        }
-      );
-      const { accessToken  } = response.data.data.accessToken;
-
-      // Store token in a secure cookie
-      Cookies.set('accessToken', accessToken, {
-        expires: 1,            // 1 day
-        secure: true,          // HTTPS only
-        sameSite: 'Lax',       // or 'Strict'
-        path: '/',
+    const { email, password } = userDetails;
+    if (email && password) {
+      const response = await loginService({ email, password }, navigate);
+      // if email or password error comes from API res , we need to set here (setError state)
+    } else {
+      setError({
+        emailError: userDetails?.email ? "" : "Enter email",
+        passwordError: userDetails?.password ? "" : "Enter password",
       });
-
-      // Clear inputs
-      setEmail('');
-      setPassword('');
-
-      // Redirect to dashboard
-      navigate('/dashboard', { replace: true });
-    } catch (err) {
-      console.error(err);
-      if (!err?.response) {
-        setErrMsg('No Server Response');
-      } else if (err.response?.status === 400) {
-        setErrMsg(err.response?.data?.message || 'Missing Username or Password');
-      } else if (err.response?.status === 401) {
-        setErrMsg('Unauthorized');
-      } else {
-        setErrMsg('Login Failed');
-      }
-      errRef.current.focus();
     }
-  }
+  };
+
   return (
     <BasicLayout image={bgImage}>
       <Card>
@@ -221,43 +137,56 @@ function Basic() {
             </Grid>
           </Grid>
         </MDBox>
-        <MDTypography
-          variant="button"
-          fontWeight="regular"
-          color="error"
-          ref={errRef}
-          textAlign="center"
-          sx={{ display: errMsg ? 'block' : 'none' }}
-          className={errMsg ? "errmsg" : "offscreen"}
-          aria-live="assertive"
-        >
-          {errMsg}
-        </MDTypography>
         <MDBox pt={4} pb={3} px={3}>
-          <MDBox component="form" role="form" onSubmit={handleSubmit} >
+          <MDBox component="form" role="form" onSubmit={handleSubmit}>
             <MDBox mb={2}>
               <MDInput
                 type="email"
                 label="Email"
-                ref={userRef}
+                name="email"
+                value={userDetails.email}
+                ref={emailRef}
                 onChange={handleChange}
                 onBlur={handleBlur}
-                error={Boolean(emailError)}
-                value={email}
+                error={Boolean(error.emailError)}
                 required
-                fullWidth />
+                fullWidth
+              />
+              <MDTypography
+                variant="button"
+                fontWeight="regular"
+                color="error"
+                textAlign="left"
+                sx={{ display: error.emailError ? "block" : "none" }}
+                className={error.emailError ? "errmsg" : "offscreen"}
+                aria-live="assertive"
+              >
+                {error.emailError}
+              </MDTypography>
             </MDBox>
             <MDBox mb={2}>
               <MDInput
                 type="password"
                 label="Password"
-                value={password}
-                onChange={handlePassChange}
-                error={Boolean(passerror)}
-                onBlur={handlePassBlur}
-                helperText={passerror}
+                name="password"
+                value={userDetails.password}
+                onChange={handleChange}
+                onBlur={handleBlur}
+                error={Boolean(error.passwordError)}
                 required
-                fullWidth />
+                fullWidth
+              />
+              <MDTypography
+                variant="button"
+                fontWeight="regular"
+                color="error"
+                textAlign="left"
+                sx={{ display: error.passwordError ? "block" : "none" }}
+                className={error.passwordError ? "errmsg" : "offscreen"}
+                aria-live="assertive"
+              >
+                {error.passwordError}
+              </MDTypography>
             </MDBox>
             <MDBox display="flex" alignItems="center" ml={-1}>
               <Switch checked={rememberMe} onChange={handleSetRememberMe} />
