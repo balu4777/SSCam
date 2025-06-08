@@ -15,37 +15,28 @@ import breakpoints from "assets/theme/base/breakpoints";
 import backgroundImage from "assets/images/bg-profile.jpeg";
 
 // 👇 Import your profile API
-import { getProfile } from "services/accountservice";
+import { getProfileService } from "services/accountServices";
 
 function Header({ children }) {
   const [tabsOrientation, setTabsOrientation] = useState("horizontal");
   const [profile, setProfile] = useState(null);
 
+  // Fetch Profile on Load
   useEffect(() => {
-    function handleTabsOrientation() {
-      return window.innerWidth < breakpoints.values.sm
-        ? setTabsOrientation("vertical")
-        : setTabsOrientation("horizontal");
-    }
+    (async () => {
+      const data = await getProfileService();
+      setProfile(data);
+    })();
+  }, []);
 
+  useEffect(() => {
+    const handleTabsOrientation = () => {
+      setTabsOrientation(window.innerWidth < breakpoints.values.sm ? "vertical" : "horizontal");
+    }
     window.addEventListener("resize", handleTabsOrientation);
     handleTabsOrientation();
 
     return () => window.removeEventListener("resize", handleTabsOrientation);
-  }, []);
-
-  // 👇 Fetch Profile on Load
-  useEffect(() => {
-    const fetchProfile = async () => {
-      try {
-        const data = await getProfile();
-        setProfile(data);
-      } catch (error) {
-        console.error("Error fetching profile:", error);
-      }
-    };
-
-    fetchProfile();
   }, []);
 
   return (
